@@ -274,7 +274,8 @@ p_tas <- ggplot()+
            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
            axis.title = element_text(size = axis_size), 
           plot.title = element_text(size = title_size),
-          strip.text = element_text(size = axis_size)) + 
+          strip.text = element_text(size = axis_size),
+          legend.key = element_rect(fill = 'grey')) + 
     ylab('fraction of total variance')
 
 ggsave(paste0(fig_dir, 'temperature_HS_regions.png'), p_tas, width = 8, height =6, units = 'in')
@@ -299,7 +300,8 @@ p_pr <- ggplot()+
            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
            axis.title = element_text(size = axis_size), 
           plot.title = element_text(size = title_size),
-          strip.text = element_text(size = axis_size)) + 
+          strip.text = element_text(size = axis_size),
+          legend.key = element_rect(fill = 'grey')) + 
     ylab('fraction of total variance')
 
 ggsave(paste0(fig_dir, 'precipitatoin_HS_regions.png'), p_pr, width = 8, height =6, units = 'in')
