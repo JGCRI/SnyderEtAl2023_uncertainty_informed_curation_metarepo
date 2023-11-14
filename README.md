@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/478588973.svg)]()
+[![DOI]()]()
 
 # SnyderEtAl2023_uncertainty_informed_curation_metarepo
  
