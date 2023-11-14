@@ -181,11 +181,12 @@ pfull <- var_explained_df %>%
   geom_point(size=4)+
   geom_line()+
   labs(title="Scree plot: PCA on scaled data - all ESMs") +
-    xlab('eigenvector') + ylab('fraction total variance explained') +
+    xlab('eigenvector') + ylab('fraction of total variance explained') +
     theme(axis.title = element_text(size = axis_size), 
           plot.title = element_text(size = title_size))
 
 ggsave(paste0(fig_dir, 'scree_fulldata.png'), pfull, width = 8, height = 6, units = 'in')
+ggsave(paste0(fig_dir, 'scree_fulldata.jpg'), pfull, width = 8, height = 6, units = 'in')
 
 pfull 
 ```
@@ -421,9 +422,7 @@ ecs_subsets %>%
 
 
 
-# TODO idea
 
-distribution of error values across all subsets, across just hte ECS preserving subsets
 
 
 
@@ -437,7 +436,7 @@ metrics %>%
     filter(coefficient_metric == min(coefficient_metric)) %>%
     left_join(table_of_subsets, by = c('subset_id')) ->
     coefficient_min
-
+hist(metrics$coefficient_metric)
 knitr::kable(coefficient_min)
 
 ```
@@ -455,6 +454,10 @@ metrics %>%
     filter(coefficient_metric == min(coefficient_metric)) ->
     coefficient_min
 
+
+hist((metrics %>%
+    left_join(ecs_subsets_clean, by = c('subset_id')) %>%
+    na.omit)$coefficient_metric)
 
 knitr::kable(coefficient_min)
 
@@ -487,9 +490,23 @@ coordinates %>%
                by = c('model', 'scenario'))  %>%
     mutate(x_id = as.integer(substr(pc_x, nchar(pc_x), nchar(pc_x))),
            y_id = as.integer(substr(pc_y, nchar(pc_y), nchar(pc_y)))) %>%
-    filter(y_id > x_id) ->
+    filter(y_id > x_id) %>%
+    # add frac variance explained by each PC to labels:
+    left_join(var_explained_df %>%
+                  mutate(PC = paste0('PC', PC), 
+                         var_explained = round(100*var_explained,
+                                               digits = 1)),
+              by = c('pc_x' = 'PC')) %>%
+    mutate(pc_x = paste0(pc_x, ' (',var_explained, '%)'))   %>%
+    select(-var_explained) %>%
+    left_join(var_explained_df %>%
+                  mutate(PC = paste0('PC', PC), 
+                         var_explained = round(100*var_explained,
+                                               digits = 1)),
+              by = c('pc_y' = 'PC')) %>%
+    mutate(pc_y = paste0(pc_y, ' (',var_explained, '%)'))   %>%
+    select(-var_explained) ->
     grid_plot
-
 
 
 p_coefs <- ggplot(data = grid_plot) +
@@ -507,6 +524,7 @@ p_coefs <- ggplot(data = grid_plot) +
     xlab('') + ylab('')
 
 ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot.png'), width = 8, height =6, units = 'in')
+ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot.jpg'), width = 8, height =6, units = 'in')
 
 p_coefs
 
@@ -529,6 +547,7 @@ p_coefs <- ggplot(data = grid_plot) +
     xlab('') + ylab('')
 
 ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_subset.png'), width = 8, height =6, units = 'in')
+ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_subset.jpg'), width = 8, height =6, units = 'in')
 
 p_coefs
 
