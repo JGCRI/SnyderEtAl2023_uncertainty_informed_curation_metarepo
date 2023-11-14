@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/478588973.svg)](https://zenodo.org/badge/latestdoi/478588973)
+[![DOI](https://zenodo.org/badge/478588973.svg)]()
 
 # SnyderEtAl2023_uncertainty_informed_curation_metarepo
  
@@ -26,15 +26,16 @@ Run the following scripts to re-create the manuscript experiments:
 
 | Script Name | Description | 
 | --- | --- | 
-| `aoi_extractions.py` | Script that processes NetCDF gridded time series data of multiple variables(T, P) to time series of annual average values in each of the IPCC WGI regions. | 
-| `metric_calc.ipynb` | Script that processes annual time series data in each IPCC region to for  | 
-| `A.intermediate_exp.py` | Script that emulates intermediate scenarios using ssp126 and ssp585 runs as the archive, GSAT outputs  | 
+| `aoi_extractions.py` | Script that processes NetCDF gridded time series data of multiple variables (T, P) to time series of annual average values in each of the IPCC WGI regions. | 
+| `metric_calc.ipynb` | Script that processes annual T, P time series data in each IPCC region to the six summary metrics of interest described in the paper. | 
+| `climate_sensitivity_sampling.ipynb` | Script that takes a subset of 5 ESMs from a provided list that preserve the IPCC very likely distribution of ECS values.  | 
+| `eigenspaces.Rmd` | Script that performs PCA decomposition of the full set of ScenarioMIP Tier 1 participating ESMs and identifies the optimal subset of ECS-distribution-preserving ESMs   | 
 | `AB.experiment_tolerance_sweep.py` | Script that emulates intermediate scenarios using all available CMIP6 runs over a range of tolerances and calculates error statistics, GSAT outputs and summary statistics outputs  | 
 | `B.ICEnsembles_ESD.r` | Script evaluating the outputs of `A.inital_cond_exp.py`, calculating error statistics and plotting results | 
 | `B.IntermediateScenarios_GSAT_ESD.r` | Script evaluating the outputs of `A.intermediate_exp.py`, calculating error statistics and plotting results | 
 | `B.IntermediateScenarios_Gridded_ESD.r` | Script evaluating the outputs of `A.tas_psl_pr.py`, calculating SOI and error statistics and plotting results | 
 
 
-Data generated from the A and AB steps for this publication are archived (https://doi.org/10.5281/zenodo.6461693).
+Data generated from the A and AB steps for this publication are archived ().
 
 
