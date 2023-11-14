@@ -33,6 +33,8 @@ Run the following scripts to re-create the manuscript experiments:
 | `eigenspaces.html` | An executed copy of `eigenspaces.Rmd`  | 
 | `separating_uncertainty.ipynb` | Script that calculates the Hawkins and Sutton uncertainty partitions for the first available ensemble member for T and P for both the full set CMIP6 ESMs and a specified subset | 
 | `HS-uncertainty-evaluation.Rmd` | Script that compares the Hawkins and Sutton uncertainty partitions for the first available ensemble member for T and P for both the full set CMIP6 ESMs and selected subset, for validation purposes.| 
+| `HS-uncertainty-evaluation.html` | An executed copy of `HS-uncertainty-evaluation.Rmd`  | 
+
 
 Data generated for this publication are archived ().
 
