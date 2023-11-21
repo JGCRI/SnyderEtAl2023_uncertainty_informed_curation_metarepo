@@ -152,6 +152,37 @@ rm(full_data1)
 ```
 
 
+## summary figure of raw data
+
+```{r}
+full_data %>%
+    mutate(id = row.names(.)) %>%
+    separate(id, into = c('model', 'scenario', 'trash'), sep= '~') %>%
+    select(-trash) %>%
+    gather(id2, value, -model, -scenario) %>%
+    separate(id2, into = c('region', 'metric'), sep = '~') ->
+    raw_plt
+
+
+p_raw <- ggplot(data = raw_plt) +
+    geom_point(mapping = aes(x = region, y = value,
+                             color = model, shape = scenario)) +
+    ggtitle('Projection of ESM data into the first five eigenvectors') +
+    facet_wrap(~metric, scale = 'free_y') +
+    theme_bw()+
+    theme(strip.text = element_text(size = axis_size),
+          plot.title = element_text(size=title_size),
+          legend.text = element_text(size = axis_size-4),
+          legend.key.width = unit(0.3, 'cm'),
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    xlab('') + ylab('')+ guides(color="none", shape = 'none')
+
+ggsave(paste0(fig_dir, 'full_data_raw_plot.png'),p_raw, width = 10, height =6, units = 'in')
+ggsave(paste0(fig_dir, 'full_data_raw_plot.jpg'), p_raw, width =  10, height = 6, units = 'in')
+
+p_raw
+```
+
 # PCA
 
 ## cmip6 'truth'

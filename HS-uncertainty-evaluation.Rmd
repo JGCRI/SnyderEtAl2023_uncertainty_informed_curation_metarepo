@@ -20,6 +20,7 @@ fig_dir <- 'figures/'
 year_cutoff <- 2040
 rms_cutoff <- 0.1
 
+
 # Figure sizing info
 title_size <- 14
 axis_size <- 12
@@ -385,7 +386,7 @@ shp2 %>%
              mean_lat, geometry) %>%
     summarize(fill_color = sum(fill_color)) %>%
     ungroup %>%
-    mutate(fill_color = if_else(fill_color == 0, 'No Correct Var',
+    mutate(fill_color = if_else(fill_color == 0, 'Both Vars Flagged',
                                 if_else(fill_color == 0.5, 'Precip only',
                                         if_else(fill_color ==1, 'Temp only',
                                                 if_else(fill_color == 1.5, 'Precip and Temp', 'NA'))))) ->
@@ -398,7 +399,7 @@ p_map <- ggplot() +
   #geom_point(data = shp, mapping = aes(x = mean_lon, y = mean_lat), color = 'red') +
   geom_text(data = shp3, mapping = aes(label = Acronym, x = mean_lon, y= mean_lat), size = 4) +
   #ggtitle('coef') + 
-    xlab('') + ylab('')+
+    xlab('') + ylab('')+  labs(fill='')+
     theme(plot.margin=grid::unit(c(0,0,0,0), "mm")) 
 
 
