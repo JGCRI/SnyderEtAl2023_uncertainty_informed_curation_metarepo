@@ -29,8 +29,8 @@ Run the following scripts to re-create the manuscript experiments:
 | `aoi_extractions.py` | Script that processes NetCDF gridded time series data of multiple variables (T, P) to time series of annual average values in each of the IPCC WGI regions. | 
 | `metric_calc.ipynb` | Script that processes annual T, P time series data in each IPCC region to the six summary metrics of interest described in the paper. | 
 | `climate_sensitivity_sampling.ipynb` | Script that takes a subset of 5 ESMs from a provided list that preserve the IPCC very likely distribution of ECS values.  | 
-| `eigenspaces.Rmd` | Script that 1. performs PCA decomposition of the full set of ScenarioMIP Tier 1 participating ESMs. 2. Identifies the optimal subset of ECS-distribution-preserving ESMs to span the reduced dimension space found by the PCA.   | 
-| `eigenspaces.html` | An executed copy of `eigenspaces.Rmd`  | 
+| `subset_selection.Rmd` | Script that 1. performs PCA decomposition of the full set of ScenarioMIP Tier 1 participating ESMs. 2. Identifies the optimal subset of ECS-distribution-preserving ESMs to span the reduced dimension space found by the PCA.   | 
+| `subset_selection.html` | An executed copy of `subset_selection.Rmd`  | 
 | `separating_uncertainty.ipynb` | Script that calculates the Hawkins and Sutton uncertainty partitions for the first available ensemble member for T and P for both the full set CMIP6 ESMs and a specified subset | 
 | `HS-uncertainty-evaluation.Rmd` | Script that compares the Hawkins and Sutton uncertainty partitions for the first available ensemble member for T and P for both the full set CMIP6 ESMs and selected subset, for validation purposes.| 
 | `HS-uncertainty-evaluation.html` | An executed copy of `HS-uncertainty-evaluation.Rmd`  | 
