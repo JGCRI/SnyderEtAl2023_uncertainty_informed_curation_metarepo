@@ -15,22 +15,28 @@ of those subsets that says how good the subset is at representing the 'truth'
 that is the PCA of all of the CMIP6 data. 
 
 Then select the subset of ESMs with the smallest value for that metric and those
-are our 'curated archive' ESMs.
+are our subset ESMs.
 
 Work with this metric:
-The coefficients of all CMIP6 data into the first N eigenvectors from the PCA
-of all data. For each of the OOS esmXscenarios, for each subset ESM, calculate 
+
+The coefficients of all CMIP6 data projected into the first N eigenvectors from 
+the PCA of all data. 
+
+For each of the OOS esmXscenarios, for each subset ESM, calculate 
 the smallest L2 distance from the coefficients across the subset ESM's scenarios=
-how close each subset ESM can get to every out of sample data point. Then take
+how close each subset ESM can get to every out of sample data point. 
+
+Then take
 the minimum across subset ESMs = how close the selected subset can get to each
-OOS data point. The average of that distance from all OOS data points is then
+OOS data point. 
+
+The average of that distance from all OOS data points is then
 the metric for that subset.
 
 
 
 # set up
 
-And some package and labeling info
 
 ```{r}
 library(ggplot2)
@@ -233,9 +239,6 @@ coefficients span the space in the sense of:
 
 - every ESM is 'close enough' to one of the selected models in terms of L2
 distance of coefficients
-
-- Con: have to decide on a cutoff
-
 
 - Making sure each oosESM-Exp combo being similar to one chosenESM-Exp combo
 
@@ -451,12 +454,6 @@ ecs_subsets %>%
 ```
 
 
-
-
-
-
-
-
 ## minimize across all possible combinations
 
 ```{r}
@@ -583,103 +580,5 @@ ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_subset.jpg'), width = 8, heigh
 p_coefs
 
 ```
-# Validation
-
-
-## basic summary values
-
-```{r}
-as.data.frame(full_data) %>%
-    mutate(id = row.names(.)) %>%
-    separate(id, into = c('esm', 'scenario', 'ensemble') , sep = '~') %>%
-    gather(metric, value, -esm, -scenario, -ensemble) %>%
-    separate(metric, into = c('region', 'metric'), sep = '~') %>%
-    spread(metric, value)->
-    full_df
-
-full_df %>%
-    filter(esm %in% coefficient_min$subset) ->
-    sub_df
-
-
-
-full_df %>%
-    group_by(region) %>%
-    summarize(cmip_pr_end_anomaly_pct = mean(pr_end_anomaly_pct),
-              cmip_pr_iasd = mean(pr_iasd),
-              cmip_pr_mid_anomaly_pct = mean(pr_mid_anomaly_pct),
-              cmip_tas_end_anomaly = mean(tas_end_anomaly),
-              cmip_tas_iasd = mean(tas_iasd),
-              cmip_tas_mid_anomaly = mean(tas_mid_anomaly)) %>%
-    ungroup ->
-    full_summary
-
-sub_df %>%
-    group_by(region) %>%
-    summarize(sub_pr_end_anomaly_pct = mean(pr_end_anomaly_pct),
-              sub_pr_iasd = mean(pr_iasd),
-              sub_pr_mid_anomaly_pct = mean(pr_mid_anomaly_pct),
-              sub_tas_end_anomaly = mean(tas_end_anomaly),
-              sub_tas_iasd = mean(tas_iasd),
-              sub_tas_mid_anomaly = mean(tas_mid_anomaly)) %>%
-    ungroup ->
-    sub_summary
-
-
-full_summary %>%
-    left_join(sub_summary, by = 'region') %>%
-    mutate(diff_pr_end_anomaly_pct = cmip_pr_end_anomaly_pct-sub_pr_end_anomaly_pct,
-           diff_pr_iasd = cmip_pr_iasd-sub_pr_iasd,
-           diff_pr_mid_anomaly_pct = cmip_pr_mid_anomaly_pct-sub_pr_mid_anomaly_pct,
-           diff_tas_end_anomaly = cmip_tas_end_anomaly-sub_tas_end_anomaly,
-           diff_tas_iasd = cmip_tas_iasd-sub_tas_iasd,
-           diff_tas_mid_anomaly = cmip_tas_mid_anomaly-sub_tas_mid_anomaly) ->
-     compare
-
-max(abs(compare$diff_pr_end_anomaly_pct))
-max(abs(compare$diff_pr_iasd))
-max(abs(compare$diff_pr_mid_anomaly_pct))
-max(abs(compare$diff_tas_end_anomaly))
-max(abs(compare$diff_tas_iasd))
-max(abs(compare$diff_tas_mid_anomaly))
-```
-
-## HS notes
-
-- Hawkins and Sutton 09/Lehner2020: do for full data, do for final subset of ESMs
-and compare?
-
-From Lehner https://esd.copernicus.org/articles/11/491/2020/esd-11-491-2020.pdf
-
-- T and P globally and regionally over time; and gridded for time slices
-
-
-1. the model uncertainty M is calculated as the
-variance across the ensemble means of the seven SMILEs
-(i.e., across the forced responses of the SMILEs). 
-
-
-2. internal variability uncertainty I is calculated as the variance
-across ensemble members of a given SMILE, yielding one
-estimate of I per model. Prior to this calculation, time series are smoothed
-with the running mean corresponding to
-the target metric (here mostly decadal means). Averaging
-across the seven I values yields the multimodel mean internal variability
-uncertainty Imean. Alternatively, to explore the
-assumption that Imean does not change over time, we use the
-1950–2014 average value of Imean throughout the calculation
-(i.e., Ifixed). We also use the model with the largest and smallest I , i.e., 
-Imax and Imin, to quantify the e influence of model
-uncertainty in the estimate of I.
-
-
-3. Following HS09, we calculate S as the variance across the multimodel means 
-calculated for the different emissions scenarios, using a consistent
-set of available models.
-
-
-Then how do I want to apply that to our IPCC regional metrics (ideally) or the 
-full time series
-
 
 

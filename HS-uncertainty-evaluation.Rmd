@@ -8,6 +8,8 @@ output:
     toc_float: true
 ---
 
+# Setup
+
 ```{r setup}
 library(dplyr)
 library(tidyr)
@@ -158,7 +160,7 @@ coef_metric %>%
 
 ```
 
-## identify cutoff, patterns for each metric
+## histogram of metric values
 
 
 ```{r, message=FALSE}
@@ -171,53 +173,27 @@ ggplot(coef_dist, aes(x = rms, color = interaction(var, uncertainty))) +
 
 ```
 
--spread is tighter for coef (most mass <0.17ish) but proj has fewer outliers for
-P (more for T)
 
-- so is 0.2 a fair cutoff for 'good' -> check HS figs
-
-- if so, then do count > 0.2 for P,T for two coeff
-
-## coef below cutoff
+## metric below cutoff
 
 ```{r}
-coef_dist %>%
-    filter(rms >=0.2) %>%
-    select(rgn, var) %>%
-    distinct %>%
-    mutate(id = paste(rgn, var, sep='~')) ->
-    coef_bad
-
 
 coef_dist %>%
-    filter(rms <0.2 & rms >= rms_cutoff) %>%
+    filter(rms >= rms_cutoff) %>%
     select(rgn, var) %>%
     distinct  %>%
     mutate(id = paste(rgn, var, sep='~')) ->
     coef_questionable
 
-
 knitr::kable(coef_questionable)
-knitr::kable(coef_bad)
 
 
 uncert_long %>%
     mutate(id = paste(rgn, var, sep='~')) %>%
     filter(year >= year_cutoff,
            metric == 'full' | metric == 'coef',
-           id %in% coef_bad$id |
-               id %in% coef_questionable$id) ->
+           id %in% coef_questionable$id) ->
     coef_rgn_plots
-
-
-# ggplot()+
-#     geom_line(coef_rgn_plots %>% filter(metric == 'full'),
-#               mapping=aes(x = year, y = value, color = uncertainty), linetype = 1) +
-#     geom_line(coef_rgn_plots %>% filter(metric == 'coef'),
-#               mapping=aes(x = year, y = value, color = uncertainty), linetype = 2) +
-#     facet_wrap(~id, nrow = 3) +
-#     ggtitle('coef')
-
 
 
 
@@ -229,23 +205,8 @@ coef_rgn_plots %>%
                                                  'NA' )))) ->
     coef_rgn_plots
 
-# ggplot()+
-#     geom_bar(coef_rgn_plots %>% filter(metric == 'full'),
-#              position = 'stack', stat = 'identity',
-#               mapping=aes(x = year, y = value, color = uncertainty, fill = uncertainty)) +
-#     scale_color_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
-#     scale_fill_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
-#     geom_bar(coef_rgn_plots %>% filter(metric == 'coef'),
-#              position = 'stack', stat = 'identity',
-#               mapping=aes(x = year, y = value, group = uncertainty), fill = NA, color = 'white', size= 0.1) +
-#     #scale_color_manual(values = c('orange', 'green', 'blue')) +
-#     facet_wrap(~id, nrow = 3) +
-#     ggtitle('coef')
 
-
-
-
-# Extract lines for coef:
+# Extract lines for subset:
 coef_rgn_plots %>%
     filter(uncertainty != 'A.Inter.Annual.Variability',
            metric=='coef') %>%
@@ -379,7 +340,7 @@ shp %>%
 
 shp2 %>%
     mutate(id = paste(Acronym, var, sep = '~'),
-           fill_color = if_else(id %in% coef_bad$id | id %in% coef_questionable$id,
+           fill_color = if_else(id %in% coef_questionable$id,
                                 0, 1),
            fill_color = if_else(fill_color == 1 & var == 'pr', 0.5, fill_color)) %>%
     group_by(Continent, Type, Name, Acronym, region_id, mean_lon, 
@@ -408,21 +369,4 @@ p_map
 ggsave(paste0(fig_dir, 'HS_success_map.png'), p_map, width = 14, height = 6, units = 'in')
 
 ```
-
-
-# Notes
-
-INteresting thing - because our region indices are focused around mid and end of
-century, our HS figures tend to be closest there.
-
-If we look over 2015 on for comparing metrics instead of 2040, we do see that the
-latter half of the century is often better than first half even in the 'bad' HS
-
-
-
-Differences over regions also interesting - if really care about Russian Arctic 
-or Australia, proj is better. If care about Americas, Africa, Europe, Asia: Coef 
-better.
-
--> given this is where most agriculture and people are, go with coefficient.
 
