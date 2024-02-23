@@ -44,13 +44,18 @@ library(dplyr)
 library(tidyr)
 
 metrics_dir <-  'extracted_timeseries/extracted_metrics/'
-write_dir <- 'subset_summary_metrics/'
-fig_dir <- 'figures/'
+write_dir <- 'subset_summary_metrics_revise/'
+fig_dir <- 'figures_revise/'
 
 # ESMS that dont have 4 experiments
 non_candidate_esm <- c("CIESM", 
                        "E3SM-1-1", "FIO-ESM-2-0", "GFDL-CM4", "IITM-ESM",
                        "IPSL-CM5A2-INCA", "KIOST-ESM", "NESM3", "NorESM2-LM")
+
+# Cut ESMs with obvious dependencies
+# ESM w more realizations is one that stays
+cut_dependent <- c('ACCESS-CM2', 'CESM2-WACCM', 'CMCC-CM2-SR5', 
+                   'FGOALS-f3-L', 'INM-CM4-8', 'MPI-ESM1-2-HR')
             
 
 # Figure sizing info
@@ -70,12 +75,25 @@ region_summary_main %>%
          experiment != 'ssp434',
          experiment != 'ssp460',
          experiment != 'ssp534-over',
+         !(esm %in% cut_dependent),
          !(esm %in% non_candidate_esm))  %>% # remove from the full set of data 
                                              # that creates our 'true' CMIP6 PCA space
-    rename(region = acronym) ->
+    rename(region = acronym)  %>%
+    mutate(hist_val_end = end_anomaly-end_val,
+           hist_val_mid = mid_anomaly-mid_century_val)->
   region_summary 
 
 print(head(region_summary))
+
+# Verify that the historical average value when backed out from the end and mid
+# century anomaly is about the same
+print(max(abs(region_summary$hist_val_end-region_summary$hist_val_mid)))
+
+# keep one
+region_summary %>%
+    select(-hist_val_mid) %>%
+    rename(hist_avg_val = hist_val_end) ->
+    region_summary
 
 ```
 
@@ -201,9 +219,6 @@ full_pca <- prcomp(full_data, center=TRUE, scale = TRUE)
 full_eigenval <- data.frame(eigenvalues=(full_pca$sdev)^2)
 full_eigenvec <- full_pca$rotation
 
-write.csv(full_eigenval, 'orig_eval.csv')
-write.csv(full_eigenvec, 'orig_evec.csv')
-
 # skree
 var_explained_df <- data.frame(var_explained=(full_pca$sdev)^2/sum((full_pca$sdev)^2)) %>%
     mutate(PC = as.integer(row.names(.)))
@@ -231,6 +246,20 @@ ggsave(paste0(fig_dir, 'scree_fulldata.jpg'), pfull, width = 8, height = 6, unit
 pfull 
 ```
 
+# see how eigenvectors change
+
+```{r}
+orig_eval <- read.csv('orig_eval.csv')
+orig_evec <- read.csv('orig_evec.csv')
+
+
+max(abs(full_eigenval - orig_eval$eigenvalues[1:6]))
+
+max(abs(orig_evec$PC1 - as.data.frame(full_eigenvec)$PC1))
+max(abs(orig_evec$PC2 - as.data.frame(full_eigenvec)$PC2))
+max(abs(orig_evec$PC3 - as.data.frame(full_eigenvec)$PC3))
+max(abs(orig_evec$PC15 - as.data.frame(full_eigenvec)$PC15))
+```
 
 -> first five eigenvalues focus
 
@@ -352,10 +381,10 @@ as.data.frame(t(apply(combn(nrow(df), nESMs),
     select(-trash) %>%
     arrange(subset_id) ->
     table_of_subsets
-write.csv(table_of_subsets, paste0(write_dir,'subsets_22choose5.csv'), row.names = FALSE)
+write.csv(table_of_subsets, paste0(write_dir,'subsets_16choose5.csv'), row.names = FALSE)
 
 # Same data but reshaped
-table_of_subsets <- read.csv(paste0(write_dir,'subsets_22choose5.csv')) 
+table_of_subsets <- read.csv(paste0(write_dir,'subsets_16choose5.csv')) 
 table_of_subsets %>%
     mutate(mod = as.integer(row.names(.)) %% 5,
            esm=paste0('esm', mod)) %>% 
@@ -415,7 +444,7 @@ for (subsetid in unique(table_of_subsets$subset_id)){
     
 }
 
-write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_22choose5.csv'), row.names = FALSE)
+write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_16choose5.csv'), row.names = FALSE)
 
 ```
 
@@ -424,11 +453,11 @@ write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_22choose5.csv'), row.na
 
 ```{r}
 # Metrics for every subset with IDs
-metrics <- read.csv(paste0(write_dir,'esm_subsets_metrics_22choose5.csv')) %>%
+metrics <- read.csv(paste0(write_dir,'esm_subsets_metrics_16choose5.csv')) %>%
     rename(coefficient_metric = avg_closest_L2)
 
 # Table of all subsets with IDs
-table_of_subsets <- read.csv(paste0(write_dir,'subsets_22choose5.csv'))
+table_of_subsets <- read.csv(paste0(write_dir,'subsets_16choose5.csv'))
 table_of_subsets %>%
     mutate(mod = as.integer(row.names(.)) %% 5,
            esm=paste0('esm', mod)) %>% 
@@ -505,7 +534,11 @@ full_pca$x %>%
   as.data.frame() %>%
   mutate(id = row.names(.)) %>%
   separate(id, into=c('model', 'scenario', 'ensemble'), sep = '~') %>%
-  select(model, scenario, PC1, PC2, PC3, PC4, PC5)->
+  select(model, scenario, PC1, PC2, PC3, PC4, PC5) %>%
+    mutate(PC1 = -PC1,
+           PC2 = -PC2,
+           PC3 = -PC3,
+           PC4 = -PC4)->
   coordinates
 
 ```
@@ -584,93 +617,4 @@ p_coefs
 
 ```
 
-
-
-# Cut six obvious dependecies
-
-```{r}
-cut_dependent <- c('ACCESS-CM2', 'CESM2-WACCM', 'CMCC-CM2-SR5', 
-                   'FGOALS-f3-L', 'INM-CM4-8', 'MPI-ESM1-2-HR')
-```
-
-### repeat coef plot without and drop some dependencies 
-
-```{r}
-coordinates %>%
-    filter(!(model %in% cut_dependent)) %>%
-    gather(pc_x, pc_x_val, -model, -scenario)  %>%
-    left_join(coordinates %>% 
-                  gather(pc_y, pc_y_val, -model, -scenario),
-               by = c('model', 'scenario'))  %>%
-    mutate(x_id = as.integer(substr(pc_x, nchar(pc_x), nchar(pc_x))),
-           y_id = as.integer(substr(pc_y, nchar(pc_y), nchar(pc_y)))) %>%
-    filter(y_id > x_id) %>%
-    # add frac variance explained by each PC to labels:
-    left_join(var_explained_df %>%
-                  mutate(PC = paste0('PC', PC), 
-                         var_explained = round(100*var_explained,
-                                               digits = 1)),
-              by = c('pc_x' = 'PC')) %>%
-    mutate(pc_x = paste0(pc_x, ' (',var_explained, '%)'))   %>%
-    select(-var_explained) %>%
-    left_join(var_explained_df %>%
-                  mutate(PC = paste0('PC', PC), 
-                         var_explained = round(100*var_explained,
-                                               digits = 1)),
-              by = c('pc_y' = 'PC')) %>%
-    mutate(pc_y = paste0(pc_y, ' (',var_explained, '%)'))   %>%
-    select(-var_explained) ->
-    grid_plot
-
-
-p_coefs2 <- ggplot(data = grid_plot) +
-    geom_point(mapping = aes(x = pc_x_val, y = pc_y_val,
-                             color = model, shape = scenario)) +
-    #  geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
-    #            mapping = aes(x = pc_x_val, y = pc_y_val, color = model, shape = scenario),
-    #            size = 2) +
-    ggtitle('Projection of ESM data into the first five eigenvectors, cut 6 model') +
-    facet_grid(pc_y ~ pc_x, switch = 'both') +
-    theme(strip.text = element_text(size = axis_size),
-          plot.title = element_text(size=title_size),
-          legend.text = element_text(size = axis_size-4),
-          legend.key.width = unit(0.3, 'cm')) +
-    xlab('') + ylab('')
-
-ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_cut6.png'), width = 8, height =6, units = 'in')
-ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_cut6.jpg'), width = 8, height =6, units = 'in')
-
-p_coefs2
-
-            
-```
-
-# Select minimizing subset from those without one of 6
-
-
-## minimize across ECS-distribution
-
-```{r}
-
-
-# Subset that is minimum in the projection metric across all possible subsets
-metrics %>%
-    left_join(ecs_subsets_clean, by = c('subset_id')) %>%
-    na.omit %>%
-    group_by(subset_id) %>%
-    mutate(drop6 = if_else(subset %in% cut_dependent, 1, 0),
-           total = sum(drop6))%>%
-    ungroup  %>%
-    filter(total == 0) %>%
-     filter(coefficient_metric == min(coefficient_metric)) ->
-    coefficient_min
-
-
-hist((metrics %>%
-    left_join(ecs_subsets_clean, by = c('subset_id')) %>%
-    na.omit)$coefficient_metric)
-
-knitr::kable(coefficient_min)
-
-```
 
