@@ -674,3 +674,57 @@ knitr::kable(coefficient_min)
 
 ```
 
+
+
+
+```{r}
+coordinates %>%
+    filter(!(model %in% cut_dependent)) %>%
+    gather(pc_x, pc_x_val, -model, -scenario)  %>%
+    left_join(coordinates %>% 
+                  gather(pc_y, pc_y_val, -model, -scenario),
+               by = c('model', 'scenario'))  %>%
+    mutate(x_id = as.integer(substr(pc_x, nchar(pc_x), nchar(pc_x))),
+           y_id = as.integer(substr(pc_y, nchar(pc_y), nchar(pc_y)))) %>%
+    filter(y_id > x_id) %>%
+    # add frac variance explained by each PC to labels:
+    left_join(var_explained_df %>%
+                  mutate(PC = paste0('PC', PC), 
+                         var_explained = round(100*var_explained,
+                                               digits = 1)),
+              by = c('pc_x' = 'PC')) %>%
+    mutate(pc_x = paste0(pc_x, ' (',var_explained, '%)'))   %>%
+    select(-var_explained) %>%
+    left_join(var_explained_df %>%
+                  mutate(PC = paste0('PC', PC), 
+                         var_explained = round(100*var_explained,
+                                               digits = 1)),
+              by = c('pc_y' = 'PC')) %>%
+    mutate(pc_y = paste0(pc_y, ' (',var_explained, '%)'))   %>%
+    select(-var_explained) ->
+    grid_plot
+
+
+p_coefs2 <- ggplot(data = grid_plot) +
+    geom_point(mapping = aes(x = pc_x_val, y = pc_y_val,
+                             color = model, shape = scenario)) +
+    #  geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
+    #            mapping = aes(x = pc_x_val, y = pc_y_val, color = model, shape = scenario),
+    #            size = 2) +
+     geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
+               mapping = aes(x = pc_x_val, y = pc_y_val),
+               color = 'black', shape = 0, size = 2) +
+    ggtitle('Projection of ESM data into the first five eigenvectors, cut 6 model') +
+    facet_grid(pc_y ~ pc_x, switch = 'both') +
+    theme(strip.text = element_text(size = axis_size),
+          plot.title = element_text(size=title_size),
+          legend.text = element_text(size = axis_size-4),
+          legend.key.width = unit(0.3, 'cm')) +
+    xlab('') + ylab('')
+
+ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_cut6_selected.png'), width = 8, height =6, units = 'in')
+ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_cut6_selected.jpg'), width = 8, height =6, units = 'in')
+
+p_coefs2
+
+```
