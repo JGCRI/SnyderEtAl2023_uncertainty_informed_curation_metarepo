@@ -44,8 +44,8 @@ library(dplyr)
 library(tidyr)
 
 metrics_dir <-  'extracted_timeseries/extracted_metrics/'
-write_dir <- 'subset_summary_metrics_revise_tp/'
-fig_dir <- 'figures_revise_tp/'
+write_dir <- 'subset_summary_metrics_revise_tp_allmodels/'
+fig_dir <- 'figures_revise_tp_allmodels/'
 
 # ESMS that dont have 4 experiments
 non_candidate_esm <- c("CIESM", 
@@ -54,7 +54,7 @@ non_candidate_esm <- c("CIESM",
 
 # Cut ESMs with obvious dependencies
 # ESM w more realizations is one that stays
-cut_dependent <- c('ACCESS-CM2', 'CESM2-WACCM', 'CMCC-CM2-SR5', 
+cut_dependent  <- c('ACCESS-CM2', 'CESM2-WACCM', 'CMCC-CM2-SR5', 
                    'FGOALS-f3-L', 'INM-CM4-8', 'MPI-ESM1-2-HR')
             
 
@@ -75,7 +75,7 @@ region_summary_main %>%
          experiment != 'ssp434',
          experiment != 'ssp460',
          experiment != 'ssp534-over',
-         !(esm %in% cut_dependent),
+         #!(esm %in% cut_dependent),
          !(esm %in% non_candidate_esm))  %>% # remove from the full set of data 
                                              # that creates our 'true' CMIP6 PCA space
     rename(region = acronym)  %>%
@@ -386,10 +386,10 @@ as.data.frame(t(apply(combn(nrow(df), nESMs),
     select(-trash) %>%
     arrange(subset_id) ->
     table_of_subsets
-write.csv(table_of_subsets, paste0(write_dir,'subsets_16choose5.csv'), row.names = FALSE)
+write.csv(table_of_subsets, paste0(write_dir,'subsets_22choose5.csv'), row.names = FALSE)
 
 # Same data but reshaped
-table_of_subsets <- read.csv(paste0(write_dir,'subsets_16choose5.csv')) 
+table_of_subsets <- read.csv(paste0(write_dir,'subsets_22choose5.csv')) 
 table_of_subsets %>%
     mutate(mod = as.integer(row.names(.)) %% 5,
            esm=paste0('esm', mod)) %>% 
@@ -449,7 +449,7 @@ for (subsetid in unique(table_of_subsets$subset_id)){
     
 }
 
-write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_16choose5.csv'), row.names = FALSE)
+write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_22choose5.csv'), row.names = FALSE)
 
 ```
 
@@ -458,11 +458,11 @@ write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_16choose5.csv'), row.na
 
 ```{r}
 # Metrics for every subset with IDs
-metrics <- read.csv(paste0(write_dir,'esm_subsets_metrics_16choose5.csv')) %>%
+metrics <- read.csv(paste0(write_dir,'esm_subsets_metrics_22choose5.csv')) %>%
     rename(coefficient_metric = avg_closest_L2)
 
 # Table of all subsets with IDs
-table_of_subsets <- read.csv(paste0(write_dir,'subsets_16choose5.csv'))
+table_of_subsets <- read.csv(paste0(write_dir,'subsets_22choose5.csv'))
 table_of_subsets %>%
     mutate(mod = as.integer(row.names(.)) %% 5,
            esm=paste0('esm', mod)) %>% 
