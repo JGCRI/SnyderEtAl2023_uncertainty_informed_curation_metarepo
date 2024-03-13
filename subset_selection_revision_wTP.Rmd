@@ -44,8 +44,8 @@ library(dplyr)
 library(tidyr)
 
 metrics_dir <-  'extracted_timeseries/extracted_metrics/'
-write_dir <- 'subset_summary_metrics_revise_tp_allmodels/'
-fig_dir <- 'figures_revise_tp_allmodels/'
+write_dir <- 'subset_summary_metrics_revise_tp/'
+fig_dir <- 'figures_revise_tp/'
 
 # ESMS that dont have 4 experiments
 non_candidate_esm <- c("CIESM", 
@@ -75,7 +75,7 @@ region_summary_main %>%
          experiment != 'ssp434',
          experiment != 'ssp460',
          experiment != 'ssp534-over',
-         #!(esm %in% cut_dependent),
+         !(esm %in% cut_dependent),
          !(esm %in% non_candidate_esm))  %>% # remove from the full set of data 
                                              # that creates our 'true' CMIP6 PCA space
     rename(region = acronym)  %>%
@@ -359,13 +359,13 @@ p_map <- ggplot() +
           panel.border = element_blank()) +
     theme(plot.margin=grid::unit(c(0,0,0,0), "mm")) +
     xlab('') + ylab('')+  labs(fill='')+
-    facet_grid(PC~plot_index) 
-
+    facet_grid(PC~plot_index) +
+    ggtitle(fig_dir)
 
 
 p_map
 
-#ggsave(paste0(fig_dir, 'HS_success_map.png'), p_map, width = 14, height = 6, units = 'in')
+ggsave(paste0(fig_dir, 'eigenvectors.png'), p_map, width = 18, height = 8, units = 'in')
 
 ```
 
@@ -489,10 +489,10 @@ as.data.frame(t(apply(combn(nrow(df), nESMs),
     select(-trash) %>%
     arrange(subset_id) ->
     table_of_subsets
-write.csv(table_of_subsets, paste0(write_dir,'subsets_22choose5.csv'), row.names = FALSE)
+write.csv(table_of_subsets, paste0(write_dir,'subsets_16choose5.csv'), row.names = FALSE)
 
 # Same data but reshaped
-table_of_subsets <- read.csv(paste0(write_dir,'subsets_22choose5.csv')) 
+table_of_subsets <- read.csv(paste0(write_dir,'subsets_16choose5.csv')) 
 table_of_subsets %>%
     mutate(mod = as.integer(row.names(.)) %% 5,
            esm=paste0('esm', mod)) %>% 
@@ -552,7 +552,7 @@ for (subsetid in unique(table_of_subsets$subset_id)){
     
 }
 
-write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_22choose5.csv'), row.names = FALSE)
+write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_16choose5.csv'), row.names = FALSE)
 
 ```
 
@@ -561,11 +561,11 @@ write.csv(metrics, paste0(write_dir,'esm_subsets_metrics_22choose5.csv'), row.na
 
 ```{r}
 # Metrics for every subset with IDs
-metrics <- read.csv(paste0(write_dir,'esm_subsets_metrics_22choose5.csv')) %>%
+metrics <- read.csv(paste0(write_dir,'esm_subsets_metrics_16choose5.csv')) %>%
     rename(coefficient_metric = avg_closest_L2)
 
 # Table of all subsets with IDs
-table_of_subsets <- read.csv(paste0(write_dir,'subsets_22choose5.csv'))
+table_of_subsets <- read.csv(paste0(write_dir,'subsets_16choose5.csv'))
 table_of_subsets %>%
     mutate(mod = as.integer(row.names(.)) %% 5,
            esm=paste0('esm', mod)) %>% 
@@ -687,7 +687,8 @@ p_coefs <- ggplot(data = grid_plot) +
     #  geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
     #            mapping = aes(x = pc_x_val, y = pc_y_val, color = model, shape = scenario),
     #            size = 2) +
-    ggtitle('Projection of ESM data into the first five eigenvectors') +
+        ggtitle(paste('Projection of ESM data into the first five eigenvectors \n',
+                  fig_dir)) +
     facet_grid(pc_y ~ pc_x, switch = 'both') +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),
@@ -710,7 +711,8 @@ p_coefs <- ggplot(data = grid_plot) +
      geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
                mapping = aes(x = pc_x_val, y = pc_y_val),
                color = 'black', shape = 0, size = 2) +
-    ggtitle('Projection of ESM data into the first five eigenvectors') +
+    ggtitle(paste('Projection of ESM data into the first five eigenvectors \n',
+                  fig_dir)) +
     facet_grid(pc_y ~ pc_x, switch = 'both') +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),

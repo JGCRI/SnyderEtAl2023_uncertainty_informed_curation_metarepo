@@ -246,22 +246,125 @@ ggsave(paste0(fig_dir, 'scree_fulldata.jpg'), pfull, width = 8, height = 6, unit
 pfull 
 ```
 
-# see how eigenvectors change
-
-```{r}
-orig_eval <- read.csv('orig_eval.csv')
-orig_evec <- read.csv('orig_evec.csv')
-
-
-max(abs(full_eigenval - orig_eval$eigenvalues[1:6]))
-
-max(abs(orig_evec$PC1 - as.data.frame(full_eigenvec)$PC1))
-max(abs(orig_evec$PC2 - as.data.frame(full_eigenvec)$PC2))
-max(abs(orig_evec$PC3 - as.data.frame(full_eigenvec)$PC3))
-max(abs(orig_evec$PC15 - as.data.frame(full_eigenvec)$PC15))
-```
 
 -> first five eigenvalues focus
+
+# Spatial plots of eigenvectors
+
+```{r}
+as.data.frame(full_eigenvec[,1:5]) %>%
+    mutate(id = row.names(.)) %>%
+    separate(id, into = c('region', 'index'), sep = '~')  %>%
+    gather(PC, value, -region, -index) ->
+    evec
+
+```
+
+
+```{r, echo=FALSE}
+
+library(sf)
+
+shp <- st_read(dsn = 'IPCC-WGI-reference-regions-v4_shapefile/IPCC-WGI-reference-regions-v4.shp', stringsAsFactors = F)
+
+# add a numerical region id
+shp %>% 
+  mutate(region_id = as.integer(row.names(.))) ->
+  shp
+
+# add coordinate info probably
+shp1 <-  st_transform(shp, "+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+# extract
+coords <- as.data.frame(st_coordinates(shp1))
+
+
+# get a mean lon and lat value in each shape
+coords %>%
+  rename(lon = X, lat = Y, region_id = L3) %>%
+  left_join(as.data.frame(shp) %>% select(region_id, Acronym), by = 'region_id') %>%
+  filter(grepl('PO', Acronym)) %>% 
+  # have to have lon on 0:360 so th pacific ocean behaves even though not
+  # looking at that here
+  mutate(lon_360 = if_else(lon >=0, lon, lon+360))%>%
+  group_by(region_id) %>%
+  summarise(mean_lon = mean(lon_360),
+            mean_lat = mean(lat)) %>%
+  ungroup  %>%
+  mutate(mean_lon = if_else(mean_lon >= 0 & mean_lon <= 180, 
+                            mean_lon, mean_lon - 360) ) ->
+  mean_pts_PO
+
+coords %>%
+  rename(lon = X, lat = Y, region_id = L3) %>%
+  left_join(as.data.frame(shp) %>% select(region_id, Acronym), by = 'region_id') %>%
+  filter(!grepl('PO', Acronym)) %>% 
+  # have to have lon on 0:360 so th pacific ocean behaves even though not
+  # looking at that here
+  group_by(region_id) %>%
+  summarise(mean_lon = mean(lon),
+            mean_lat = mean(lat)) %>%
+  ungroup  %>% 
+  bind_rows(mean_pts_PO)->
+  mean_pts 
+
+
+```
+
+
+```{r, fig.width=14, fig.height=10, echo=FALSE}
+# Join to the shape file and make sure this very simple way of
+# doing things ends up with a lon lat that is actually in each region
+shp %>%
+    left_join(mean_pts, by = 'region_id') %>%
+    left_join(evec , by = c('Acronym' = 'region')) %>%
+    left_join(data.frame(index = c('pr_end_anomaly_pct',
+                     'pr_hist_avg_val',
+                     'pr_iasd',
+                     'pr_mid_anomaly_pct',
+                     'tas_end_anomaly',
+                     'tas_hist_avg_val',
+                     'tas_iasd',
+                     'tas_mid_anomaly'),
+           plot_index = c('7. pr_end_anomaly_pct',
+                     '5. pr_hist_avg_val',
+                     '8. pr_iasd',
+                     '6. pr_mid_anomaly_pct',
+                     '3. tas_end_anomaly',
+                     '1. tas_hist_avg_val',
+                     '4. tas_iasd',
+                     '2. tas_mid_anomaly')),
+           by = 'index' ) %>%
+    na.omit() ->
+  shp2
+
+
+
+p_map <- ggplot() +
+  geom_sf(data = shp2 %>% na.omit(), mapping = aes(fill = value, color=value)  ) +
+    scale_fill_gradient2(low = 'darkblue', mid = 'white', high = 'darkred', 
+                         midpoint=0,
+                         limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
+    scale_color_gradient2(low = 'darkblue', mid = 'white', high = 'darkred',
+                          midpoint = 0,
+                         limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
+    theme_bw()+
+    theme(legend.position="bottom",
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.border = element_blank()) +
+    theme(plot.margin=grid::unit(c(0,0,0,0), "mm")) +
+    xlab('') + ylab('')+  labs(fill='')+
+    facet_grid(PC~plot_index)  +
+    ggtitle(fig_dir)
+
+
+p_map
+
+ggsave(paste0(fig_dir, 'eigenvectors.png'), p_map, width = 18, height = 8, units = 'in')
+
+```
+
 
 
 # compare coefficients in full PCA space
@@ -535,9 +638,9 @@ full_pca$x %>%
   mutate(id = row.names(.)) %>%
   separate(id, into=c('model', 'scenario', 'ensemble'), sep = '~') %>%
   select(model, scenario, PC1, PC2, PC3, PC4, PC5) %>%
-    mutate(PC1 = -PC1,
+    mutate(#PC1 = -PC1,
            PC2 = -PC2,
-           PC3 = -PC3,
+           #PC3 = -PC3,
            PC4 = -PC4)->
   coordinates
 
@@ -579,7 +682,8 @@ p_coefs <- ggplot(data = grid_plot) +
     #  geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
     #            mapping = aes(x = pc_x_val, y = pc_y_val, color = model, shape = scenario),
     #            size = 2) +
-    ggtitle('Projection of ESM data into the first five eigenvectors') +
+     ggtitle(paste('Projection of ESM data into the first five eigenvectors\n',
+                  fig_dir)) +
     facet_grid(pc_y ~ pc_x, switch = 'both') +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),
@@ -602,7 +706,8 @@ p_coefs <- ggplot(data = grid_plot) +
      geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
                mapping = aes(x = pc_x_val, y = pc_y_val),
                color = 'black', shape = 0, size = 2) +
-    ggtitle('Projection of ESM data into the first five eigenvectors') +
+    ggtitle(paste('Projection of ESM data into the first five eigenvectors\n',
+                  fig_dir)) +
     facet_grid(pc_y ~ pc_x, switch = 'both') +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),
