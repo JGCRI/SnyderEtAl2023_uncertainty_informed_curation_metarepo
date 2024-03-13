@@ -346,8 +346,12 @@ shp %>%
 
 p_map <- ggplot() +
   geom_sf(data = shp2 %>% na.omit(), mapping = aes(fill = value, color=value)  ) +
-    scale_fill_gradient2(low = 'darkblue', mid = 'white', high = 'darkred')+
-    scale_color_gradient2(low = 'darkblue', mid = 'white', high = 'darkred')+
+    scale_fill_gradient2(low = 'darkblue', mid = 'white', high = 'darkred', 
+                         midpoint=0,
+                         limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
+    scale_color_gradient2(low = 'darkblue', mid = 'white', high = 'darkred',
+                          midpoint = 0,
+                         limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
     theme_bw()+
     theme(legend.position="bottom",
           panel.grid.major = element_blank(),
