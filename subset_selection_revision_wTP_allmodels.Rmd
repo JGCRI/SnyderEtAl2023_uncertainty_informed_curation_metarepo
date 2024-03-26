@@ -57,6 +57,10 @@ non_candidate_esm <- c("CIESM",
 cut_dependent  <- c('ACCESS-CM2', 'CESM2-WACCM', 'CMCC-CM2-SR5', 
                    'FGOALS-f3-L', 'INM-CM4-8', 'MPI-ESM1-2-HR')
             
+# Models that are ineligible for selection to the subset because we 
+# sourced their ECS values from Scafetta (still part of fuller space
+# we are characterizing with PCA)
+subset_ineligible <- c()
 
 # Figure sizing info
 title_size <- 14
@@ -196,7 +200,7 @@ full_data %>%
 p_raw <- ggplot(data = raw_plt) +
     geom_point(mapping = aes(x = region, y = value,
                              color = model, shape = scenario)) +
-    ggtitle('Projection of ESM data into the first five eigenvectors') +
+    ggtitle('Projection of climate model data into the first five eigenvectors') +
     facet_wrap(~metric, scale = 'free_y') +
     theme_bw()+
     theme(strip.text = element_text(size = axis_size),
@@ -223,6 +227,7 @@ full_pca <- prcomp(full_data, center=TRUE, scale = TRUE)
 # eigenspace from the PCA
 full_eigenval <- data.frame(eigenvalues=(full_pca$sdev)^2)
 full_eigenvec <- full_pca$rotation
+print(head(full_eigenvec[, 1:2]))
 
 # skree
 var_explained_df <- data.frame(var_explained=(full_pca$sdev)^2/sum((full_pca$sdev)^2)) %>%
@@ -360,7 +365,7 @@ p_map <- ggplot() +
     theme(plot.margin=grid::unit(c(0,0,0,0), "mm")) +
     xlab('') + ylab('')+  labs(fill='')+
     facet_grid(PC~plot_index) +
-    ggtitle(fig_dir)
+    ggtitle('Experiment 1 eigenvectors')
 
 
 p_map
@@ -642,11 +647,11 @@ full_pca$x %>%
   as.data.frame() %>%
   mutate(id = row.names(.)) %>%
   separate(id, into=c('model', 'scenario', 'ensemble'), sep = '~') %>%
-  select(model, scenario, PC1, PC2, PC3, PC4, PC5) %>%
-    mutate(PC1 = -PC1,
-           PC2 = -PC2,
-           PC3 = -PC3,
-           PC4 = -PC4)->
+  select(model, scenario, PC1, PC2, PC3, PC4, PC5) ->
+    # mutate(PC1 = -PC1,
+    #        PC2 = -PC2,
+    #        PC3 = -PC3,
+    #        PC4 = -PC4)->
   coordinates
 
 ```
@@ -687,8 +692,8 @@ p_coefs <- ggplot(data = grid_plot) +
     #  geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
     #            mapping = aes(x = pc_x_val, y = pc_y_val, color = model, shape = scenario),
     #            size = 2) +
-        ggtitle(paste('Projection of ESM data into the first five eigenvectors \n',
-                  fig_dir)) +
+        ggtitle(paste('Projection of climate model data into the first five eigenvectors \n',
+                  'Experiment 1')) +
     facet_grid(pc_y ~ pc_x, switch = 'both') +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),
@@ -711,8 +716,8 @@ p_coefs <- ggplot(data = grid_plot) +
      geom_point(data = grid_plot %>% filter(model %in% coefficient_min$subset),
                mapping = aes(x = pc_x_val, y = pc_y_val),
                color = 'black', shape = 0, size = 2) +
-    ggtitle(paste('Projection of ESM data into the first five eigenvectors \n',
-                  fig_dir)) +
+    ggtitle(paste('Projection of climate model data into the first five eigenvectors \n',
+                  'Experiment 1')) +
     facet_grid(pc_y ~ pc_x, switch = 'both') +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),

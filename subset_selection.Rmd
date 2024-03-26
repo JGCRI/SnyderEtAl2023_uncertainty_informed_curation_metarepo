@@ -200,6 +200,7 @@ full_pca <- prcomp(full_data, center=TRUE, scale = TRUE)
 # eigenspace from the PCA
 full_eigenval <- data.frame(eigenvalues=(full_pca$sdev)^2)
 full_eigenvec <- full_pca$rotation
+print(head(full_eigenvec[,1:2]))
 
 write.csv(full_eigenval, 'orig_eval.csv')
 write.csv(full_eigenvec, 'orig_evec.csv')
@@ -327,10 +328,10 @@ shp %>%
 
 p_map <- ggplot() +
   geom_sf(data = shp2 %>% na.omit(), mapping = aes(fill = value, color=value)  ) +
-    scale_fill_gradient2(low = 'darkblue', mid = 'white', high = 'darkred', 
+    scale_fill_gradient2(low ='darkblue', mid = 'white', high = 'darkred', 
                          midpoint=0,
                          limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
-    scale_color_gradient2(low = 'darkblue', mid = 'white', high = 'darkred',
+    scale_color_gradient2(low ='darkblue', mid = 'white', high = 'darkred', 
                           midpoint = 0,
                          limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
     theme_bw()+
