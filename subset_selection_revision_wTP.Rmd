@@ -60,7 +60,7 @@ cut_dependent  <- c('ACCESS-CM2', 'CESM2-WACCM', 'CMCC-CM2-SR5',
 # Models that are ineligible for selection to the subset because we 
 # sourced their ECS values from Scafetta (still part of fuller space
 # we are characterizing with PCA)
-subset_ineligible <- c()
+subset_ineligible <- c('NorESM2-MM', 'CMCC-CM2-SR5' )
             
 
 # Figure sizing info
@@ -245,7 +245,7 @@ pfull <- var_explained_df %>%
   ggplot(aes(x=PC,y=var_explained, group=1))+
   geom_point(size=4)+
   geom_line()+
-  labs(title="Scree plot: PCA on scaled data - all ESMs") +
+  labs(title="Scree plot: PCA on scaled data, Experiment 2") +
     xlab('eigenvector') + ylab('fraction of total variance explained') +
     theme(axis.title = element_text(size = axis_size), 
           plot.title = element_text(size = title_size))
@@ -595,6 +595,25 @@ ecs_subsets %>%
     select(subset_id, esm, cs) %>%
     rename(subset=esm) %>%
     na.omit() ->
+    ecs_subsets_clean
+
+# remove any other ESMs from candidacy:
+table_of_subsets %>%
+    filter(!(subset %in% subset_ineligible)) %>%
+    group_by(subset_id) %>%
+    mutate(nmodels = n()) %>%
+    ungroup %>%
+    filter(nmodels == 5) %>%
+    select(-nmodels)->
+    table_of_subsets
+
+ecs_subsets_clean %>%
+  filter(!(subset %in% subset_ineligible)) %>%
+    group_by(subset_id) %>%
+    mutate(nmodels = n()) %>%
+    ungroup %>%
+    filter(nmodels == 5) %>%
+    select(-nmodels) ->
     ecs_subsets_clean
 ```
 
