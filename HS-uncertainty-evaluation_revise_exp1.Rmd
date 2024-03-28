@@ -1,0 +1,388 @@
+---
+title: "HS uncertainty evalution Experiment 1 - adding TP values, all models"
+author: "acs"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+# Setup
+
+```{r setup}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+read_dir <- 'hs_output_data'
+fig_dir <- 'figures_revise_tp_allmodels/'
+
+
+year_cutoff <- 2040
+rms_cutoff <- 0.1
+
+# Figure sizing info
+title_size <- 14
+axis_size <- 12
+```
+
+# read, reshape uncertainty time series
+
+```{r, echo = FALSE}
+pr_list <- list.files(read_dir, pattern = 'pr_',full.names = T)
+tas_list <- list.files(read_dir, pattern = 'tas_', full.names = T)
+# filter to exp1
+pr_list <- pr_list[grepl('exp1', pr_list)]
+tas_list <- tas_list[grepl('exp1', tas_list)]
+
+# list of PR coeff metric files
+pr_coef <- pr_list[grepl('subset', pr_list)]
+
+# list of PR full files
+pr_full <- pr_list[grepl('full', pr_list)]
+
+# list of tas coef metric files
+tas_coef <- tas_list[grepl('subset', tas_list)]
+
+# list of tas full files
+tas_full <- tas_list[grepl('full', tas_list)]
+
+
+# for each list of files, read in, add variable-region-metric id info, append
+uncertainties <- data.frame()
+for(filename in pr_coef){
+   # print(filename)
+    f <- read.csv(filename, stringsAsFactors = F)
+
+    f %>%
+        mutate(var = 'pr',
+               metric = 'coef',
+               tmp = substr(filename, 
+                            nchar(read_dir)+1, 
+                            nchar(filename))) %>%
+        separate(tmp, into = c('trash', 'rgn', 'trash2'), sep = '_', extra = 'merge' ) %>%
+        select(-trash, -trash2) %>%
+        bind_rows(uncertainties,.) ->
+        uncertainties
+    rm(f)
+}
+
+
+for(filename in pr_full){
+    #print(filename)
+    f <- read.csv(filename, stringsAsFactors = F)
+
+    f %>%
+        mutate(var = 'pr',
+               metric = 'full',
+               tmp = substr(filename, 
+                            nchar(read_dir)+1, 
+                            nchar(filename))) %>%
+        separate(tmp, into = c('trash', 'rgn', 'trash2'), sep = '_', extra = 'merge' ) %>%
+        select(-trash, -trash2) %>%
+        bind_rows(uncertainties,.) ->
+        uncertainties
+    rm(f)
+}
+
+for(filename in tas_coef){
+    #print(filename)
+    f <- read.csv(filename, stringsAsFactors = F)
+
+    f %>%
+        mutate(var = 'tas',
+               metric = 'coef',
+               tmp = substr(filename, 
+                            nchar(read_dir)+1, 
+                            nchar(filename))) %>%
+        separate(tmp, into = c('trash', 'rgn', 'trash2'), sep = '_', extra = 'merge' ) %>%
+        select(-trash, -trash2) %>%
+        bind_rows(uncertainties,.) ->
+        uncertainties
+    rm(f)
+}
+
+for(filename in tas_full){
+    #print(filename)
+    f <- read.csv(filename, stringsAsFactors = F)
+    
+   f %>%
+        mutate(var = 'tas',
+               metric = 'full',
+               tmp = substr(filename, 
+                            nchar(read_dir)+1, 
+                            nchar(filename))) %>%
+        separate(tmp, into = c('trash', 'rgn', 'trash2'), sep = '_', extra = 'merge' ) %>%
+        select(-trash, -trash2) %>%
+        bind_rows(uncertainties,.) ->
+        uncertainties
+    rm(f)
+}
+
+```
+
+
+```{r}
+
+# continue reshaping
+uncertainties %>% 
+    gather(uncertainty, value, -var, -metric, -rgn, - year) %>%
+    distinct->
+    uncert_long
+
+
+uncert_long %>%
+    filter(metric == 'full') %>%
+    rename(full = value) %>%
+    select(-metric) ->
+    uncert_full
+
+
+uncert_long %>%
+    filter(metric == 'coef') %>%
+    left_join(uncert_full, by = c('year', 'var', 'rgn', 'uncertainty')) ->
+    coef_metric
+
+```
+
+
+#  Compare subsets to full
+
+```{r}
+
+
+coef_metric %>%
+    filter(year >= year_cutoff) %>%
+    group_by(rgn, var, metric, uncertainty) %>%
+    summarize(rms = sqrt(mean((value-full)^2))) %>%
+    ungroup ->
+    coef_dist
+
+
+coef_metric %>%
+    filter(year >= year_cutoff) %>%
+    group_by(rgn,  metric, uncertainty) %>%
+    summarize(rms = sqrt(mean((value-full)^2))) %>%
+    ungroup ->
+    coef_dist2
+
+
+```
+
+## histogram of metric values
+
+
+```{r, message=FALSE}
+
+
+ggplot(coef_dist, aes(x = rms, color = interaction(var, uncertainty))) + 
+    geom_histogram()+
+    facet_wrap(~var) +
+    ggtitle('coef')
+
+```
+
+
+## metric below cutoff
+
+```{r}
+
+coef_dist %>%
+    filter(rms >= rms_cutoff) %>%
+    select(rgn, var) %>%
+    distinct  %>%
+    mutate(id = paste(rgn, var, sep='~')) ->
+    coef_questionable
+
+knitr::kable(coef_questionable)
+
+
+uncert_long %>%
+    mutate(id = paste(rgn, var, sep='~')) %>%
+    filter(year >= year_cutoff,
+           metric == 'full' | metric == 'coef',
+           id %in% coef_questionable$id) ->
+    coef_rgn_plots
+
+
+
+# Order stacks for HS fig
+coef_rgn_plots %>%
+    mutate(uncertainty = if_else(uncertainty == 'Inter.Annual.Variability', 'A.Inter.Annual.Variability',
+                                 if_else(uncertainty == 'Scenario.Uncertainty', 'B.Scenario.Uncertainty',
+                                         if_else(uncertainty == 'Model.Uncertainty', 'C.Model.Uncertainty',
+                                                 'NA' )))) ->
+    coef_rgn_plots
+
+
+# Extract lines for subset:
+coef_rgn_plots %>%
+    filter(uncertainty != 'A.Inter.Annual.Variability',
+           metric=='coef') %>%
+    group_by(year, var, metric, rgn, id) %>%
+    summarize(value = sum(value)) %>%
+    ungroup() %>%
+    mutate(uncertainty = 'B.Scenario.Uncertainty') %>%
+    bind_rows(coef_rgn_plots %>%
+                  filter(uncertainty == 'C.Model.Uncertainty',
+                         metric=='coef'))  ->
+    coef_rgn_plots2
+```
+
+```{r , fig.width=14, fig.height=10}
+p_tas <- ggplot()+
+    geom_bar(coef_rgn_plots %>% filter(metric == 'full', var =='tas'),
+             position = 'stack', stat = 'identity',
+              mapping=aes(x = year, y = value, color = uncertainty, fill = uncertainty)) +
+    scale_color_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
+    scale_fill_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
+    geom_line(coef_rgn_plots2 %>% filter(var == 'tas'),
+              mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
+    facet_wrap(~rgn, ncol=6) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    ggtitle(paste('Temperature Experiment 1, rms <=', rms_cutoff)) +
+    theme_bw() +
+     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+           axis.title = element_text(size = axis_size), 
+          plot.title = element_text(size = title_size),
+          strip.text = element_text(size = axis_size),
+          legend.key = element_rect(fill = 'grey')) + 
+    ylab('fraction of total variance')
+
+ggsave(paste0(fig_dir, 'temperature_exp1_', rms_cutoff,'_HS_regions.png'), p_tas, width = 8, height =6, units = 'in')
+
+p_tas
+
+```
+
+```{r , fig.width=14, fig.height=10}
+p_pr <- ggplot()+
+    geom_bar(coef_rgn_plots %>% filter(metric == 'full', var =='pr'),
+             position = 'stack', stat = 'identity',
+              mapping=aes(x = year, y = value, color = uncertainty, fill = uncertainty)) +
+    scale_color_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
+    scale_fill_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
+    geom_line(coef_rgn_plots2 %>% filter(var == 'pr'),
+              mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
+    facet_wrap(~rgn, ncol=6) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    ggtitle(paste('Precipitation Experiment 1, rms <=', rms_cutoff))+
+    theme_bw() +
+     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+           axis.title = element_text(size = axis_size), 
+          plot.title = element_text(size = title_size),
+          strip.text = element_text(size = axis_size),
+          legend.key = element_rect(fill = 'grey')) + 
+    ylab('fraction of total variance')
+
+ggsave(paste0(fig_dir, 'precipitation_exp1_', rms_cutoff,'_HS_regions.png'), p_pr, width = 8, height =6, units = 'in')
+
+p_pr
+
+```
+
+
+# Spatial info for plots where 'good'
+
+
+```{r, echo=FALSE}
+
+library(sf)
+
+shp <- st_read(dsn = 'IPCC-WGI-reference-regions-v4_shapefile/IPCC-WGI-reference-regions-v4.shp', stringsAsFactors = F)
+
+# add a numerical region id
+shp %>% 
+  mutate(region_id = as.integer(row.names(.))) ->
+  shp
+
+# add coordinate info probably
+shp1 <-  st_transform(shp, "+proj=longlat +ellps=WGS84 +datum=WGS84")
+
+# extract
+coords <- as.data.frame(st_coordinates(shp1))
+
+
+# get a mean lon and lat value in each shape
+coords %>%
+  rename(lon = X, lat = Y, region_id = L3) %>%
+  left_join(as.data.frame(shp) %>% select(region_id, Acronym), by = 'region_id') %>%
+  filter(grepl('PO', Acronym)) %>% 
+  # have to have lon on 0:360 so th pacific ocean behaves even though not
+  # looking at that here
+  mutate(lon_360 = if_else(lon >=0, lon, lon+360))%>%
+  group_by(region_id) %>%
+  summarise(mean_lon = mean(lon_360),
+            mean_lat = mean(lat)) %>%
+  ungroup  %>%
+  mutate(mean_lon = if_else(mean_lon >= 0 & mean_lon <= 180, 
+                            mean_lon, mean_lon - 360) ) ->
+  mean_pts_PO
+
+coords %>%
+  rename(lon = X, lat = Y, region_id = L3) %>%
+  left_join(as.data.frame(shp) %>% select(region_id, Acronym), by = 'region_id') %>%
+  filter(!grepl('PO', Acronym)) %>% 
+  # have to have lon on 0:360 so th pacific ocean behaves even though not
+  # looking at that here
+  group_by(region_id) %>%
+  summarise(mean_lon = mean(lon),
+            mean_lat = mean(lat)) %>%
+  ungroup  %>% 
+  bind_rows(mean_pts_PO)->
+  mean_pts 
+
+
+```
+
+
+```{r, fig.width=14, fig.height=10, echo=FALSE}
+# Join to the shape file and make sure this very simple way of
+# doing things ends up with a lon lat that is actually in each region
+shp %>%
+    left_join(mean_pts, by = 'region_id') %>%
+    left_join(coef_dist %>%
+                  select(rgn, var) %>%
+                  distinct, 
+                  by = c('Acronym' = 'rgn'))->
+  shp2
+
+shp2 %>%
+    mutate(id = paste(Acronym, var, sep = '~'),
+           fill_color = if_else(id %in% coef_questionable$id,
+                                0, 1),
+           fill_color = if_else(fill_color == 1 & var == 'pr', 0.5, fill_color)) %>%
+    group_by(Continent, Type, Name, Acronym, region_id, mean_lon, 
+             mean_lat, geometry) %>%
+    summarize(fill_color = sum(fill_color)) %>%
+    ungroup %>%
+    mutate(fill_color = if_else(fill_color == 0, 'Both Vars Flagged',
+                                if_else(fill_color == 0.5, 'Precip only agrees',
+                                        if_else(fill_color ==1, 'Temp only agrees',
+                                                if_else(fill_color == 1.5, 'Precip and Temp both agree', 'NA'))))) ->
+    shp3
+
+
+
+p_map <- ggplot() +
+  geom_sf(data = shp3, mapping = aes(fill = fill_color)  ) +
+    scale_fill_brewer() +
+  #geom_point(data = shp, mapping = aes(x = mean_lon, y = mean_lat), color = 'red') +
+  geom_text(data = shp3, mapping = aes(label = Acronym, x = mean_lon, y= mean_lat), size = 4) +
+  #ggtitle('coef') + 
+    xlab('') + ylab('')+  labs(fill='')+
+    theme(plot.margin=grid::unit(c(0,0,0,0), "mm"),
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank()) +
+    ggtitle(paste('Experiment 1, rms <=', rms_cutoff))
+
+
+p_map
+
+ggsave(paste0(fig_dir, 'HS_success_map_', rms_cutoff, '.png'), p_map, width = 14, height = 6, units = 'in')
+
+```
+
