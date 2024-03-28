@@ -24,11 +24,11 @@ library(tidyr)
 library(ggplot2)
 
 read_dir <- 'hs_output_data'
-fig_dir <- 'figures_revise_tp_allmodels/'
+fig_dir <- 'figures_revise_tp/'
 
 
 year_cutoff <- 2040
-rms_cutoff <- 0.1
+rms_cutoff <- 0.15
 
 # Figure sizing info
 title_size <- 14

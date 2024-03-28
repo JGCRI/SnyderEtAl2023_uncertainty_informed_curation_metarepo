@@ -379,7 +379,7 @@ p_map <- ggplot() +
     theme(plot.margin=grid::unit(c(0,0,0,0), "mm"),
           panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank()) +
-    ggtitle(paste('Experiment 2, rms cutoff ', rms_cutoff))
+    ggtitle(paste('Experiment 2, rms cutoff', rms_cutoff))
 
 
 p_map
