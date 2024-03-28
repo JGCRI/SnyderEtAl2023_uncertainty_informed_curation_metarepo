@@ -1,5 +1,5 @@
 ---
-title: "HS uncertainty evalution Experiment 2 - adding TP values, independent models"
+title: "HS uncertainty evalution Experiment 2 - adding TP values, independent models, no ECS constraint"
 author: "acs"
 output: 
   html_document:
@@ -10,13 +10,21 @@ output:
 
 # Setup
 
+Choose ESMs with ECS constraint
+esms_min_exp1 = ['ACCESS-CM2',   'ACCESS-ESM1-5', 'CMCC-ESM2', 'MRI-ESM2-0', 'GFDL-ESM4']
+esms_min_exp2 = ['IPSL-CM6A-LR', 'ACCESS-ESM1-5',  'MRI-ESM2-0', 'BCC-CSM2-MR', 'MIROC6']
+
+Choose ESMs without ECS constraint
+esms_min_exp1_noECS = ['CESM2', 'CanESM5', 'GFDL-ESM4', 'INM-CM5-0', 'MRI-ESM2-0']
+esms_min_exp2_noECS = ['CESM2', 'CanESM5',  'FGOALS-g3', 'IPSL-CM6A-LR', 'MRI-ESM2-0']
+
 ```{r setup}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 
 read_dir <- 'hs_output_data'
-fig_dir <- 'figures_revise_tp/'
+fig_dir <- 'figures_revise_tp_allmodels/'
 
 
 year_cutoff <- 2040
@@ -32,20 +40,21 @@ axis_size <- 12
 ```{r, echo = FALSE}
 pr_list <- list.files(read_dir, pattern = 'pr_',full.names = T)
 tas_list <- list.files(read_dir, pattern = 'tas_', full.names = T)
-# filter to exp2 and only keep the ECS constrained results
+# filter to exp2
 pr_list <- pr_list[grepl('exp2', pr_list)]
-pr_list <- pr_list[!(grepl('noECS', pr_list))]
 tas_list <- tas_list[grepl('exp2', tas_list)]
-tas_list <- tas_list[!(grepl('noECS', tas_list))]
+
 
 # list of PR coeff metric files
 pr_coef <- pr_list[grepl('subset', pr_list)]
+pr_coef <- pr_coef[(grepl('noECS', pr_coef))]
 
 # list of PR full files
 pr_full <- pr_list[grepl('full', pr_list)]
 
 # list of tas coef metric files
 tas_coef <- tas_list[grepl('subset', tas_list)]
+tas_coef <- tas_coef[(grepl('noECS', tas_coef))]
 
 # list of tas full files
 tas_full <- tas_list[grepl('full', tas_list)]
@@ -72,7 +81,7 @@ for(filename in pr_coef){
 
 
 for(filename in pr_full){
-    #print(filename)
+    print(filename)
     f <- read.csv(filename, stringsAsFactors = F)
 
     f %>%
@@ -243,7 +252,7 @@ p_tas <- ggplot()+
               mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
     facet_wrap(~rgn, ncol=6) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle(paste('Temperature Experiment 2, rms >', rms_cutoff)) +
+    ggtitle(paste('Temperature Experiment 2, rms >', rms_cutoff, 'no ECS constraint')) +
     theme_bw() +
      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
@@ -253,7 +262,7 @@ p_tas <- ggplot()+
           legend.key = element_rect(fill = 'grey')) + 
     ylab('fraction of total variance')
 
-ggsave(paste0(fig_dir, 'temperature_exp2_', rms_cutoff,'_HS_regions.png'), p_tas, width = 8, height = 8, units = 'in')
+ggsave(paste0(fig_dir, 'temperature_exp2_', rms_cutoff,'_HS_regions_noECS.png'), p_tas, width = 8, height =6, units = 'in')
 
 p_tas
 
@@ -270,7 +279,7 @@ p_pr <- ggplot()+
               mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
     facet_wrap(~rgn, ncol=6) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle(paste('Precipitation Experiment 2, rms >', rms_cutoff))+
+    ggtitle(paste('Precipitation Experiment 2, rms >', rms_cutoff, 'no ECS constraint'))+
     theme_bw() +
      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
@@ -280,7 +289,7 @@ p_pr <- ggplot()+
           legend.key = element_rect(fill = 'grey')) + 
     ylab('fraction of total variance')
 
-ggsave(paste0(fig_dir, 'precipitation_exp2_', rms_cutoff,'_HS_regions.png'), p_pr, width = 8, height = 8, units = 'in')
+ggsave(paste0(fig_dir, 'precipitation_exp2_', rms_cutoff,'_HS_regions_noECS.png'), p_pr, width = 8, height =6, units = 'in')
 
 p_pr
 
@@ -379,12 +388,12 @@ p_map <- ggplot() +
     theme(plot.margin=grid::unit(c(0,0,0,0), "mm"),
           panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank()) +
-    ggtitle(paste('Experiment 2, rms cutoff ', rms_cutoff))
+    ggtitle(paste('Experiment 2, rms cutoff', rms_cutoff, 'no ECS constraint'))
 
 
 p_map
 
-ggsave(paste0(fig_dir, 'HS_success_map_', rms_cutoff, '.png'), p_map, width = 14, height = 6, units = 'in')
+ggsave(paste0(fig_dir, 'HS_success_map_', rms_cutoff, '_noECS.png'), p_map, width = 14, height = 6, units = 'in')
 
 ```
 

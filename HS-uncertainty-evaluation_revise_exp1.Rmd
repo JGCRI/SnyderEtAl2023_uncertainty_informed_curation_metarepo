@@ -32,9 +32,11 @@ axis_size <- 12
 ```{r, echo = FALSE}
 pr_list <- list.files(read_dir, pattern = 'pr_',full.names = T)
 tas_list <- list.files(read_dir, pattern = 'tas_', full.names = T)
-# filter to exp1
+# filter to exp1 and to the files for the subset constraining ECS dist
 pr_list <- pr_list[grepl('exp1', pr_list)]
+pr_list <- pr_list[!(grepl('noECS', pr_list))]
 tas_list <- tas_list[grepl('exp1', tas_list)]
+tas_list <- tas_list[!(grepl('noECS', tas_list))]
 
 # list of PR coeff metric files
 pr_coef <- pr_list[grepl('subset', pr_list)]
@@ -241,7 +243,7 @@ p_tas <- ggplot()+
               mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
     facet_wrap(~rgn, ncol=6) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle(paste('Temperature Experiment 1, rms <=', rms_cutoff)) +
+    ggtitle(paste('Temperature Experiment 1, rms >', rms_cutoff)) +
     theme_bw() +
      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
@@ -268,7 +270,7 @@ p_pr <- ggplot()+
               mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
     facet_wrap(~rgn, ncol=6) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle(paste('Precipitation Experiment 1, rms <=', rms_cutoff))+
+    ggtitle(paste('Precipitation Experiment 1, rms >', rms_cutoff))+
     theme_bw() +
      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
@@ -377,7 +379,7 @@ p_map <- ggplot() +
     theme(plot.margin=grid::unit(c(0,0,0,0), "mm"),
           panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank()) +
-    ggtitle(paste('Experiment 1, rms <=', rms_cutoff))
+    ggtitle(paste('Experiment 1, rms cutoff', rms_cutoff))
 
 
 p_map
