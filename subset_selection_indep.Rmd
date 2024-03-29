@@ -44,8 +44,8 @@ library(dplyr)
 library(tidyr)
 
 metrics_dir <-  'extracted_timeseries/extracted_metrics/'
-write_dir <- 'subset_summary_metrics_revise/'
-fig_dir <- 'figures_revise/'
+write_dir <- 'subset_summary_metrics_indep/'
+fig_dir <- 'figures_indep/'
 
 # ESMS that dont have 4 experiments
 non_candidate_esm <- c("CIESM", 
@@ -56,6 +56,12 @@ non_candidate_esm <- c("CIESM",
 # ESM w more realizations is one that stays
 cut_dependent <- c('ACCESS-CM2', 'CESM2-WACCM', 'CMCC-CM2-SR5', 
                    'FGOALS-f3-L', 'INM-CM4-8', 'MPI-ESM1-2-HR')
+
+# Models that are ineligible for selection to the subset because we 
+# sourced their ECS values from Scafetta (still part of fuller space
+# we are characterizing with PCA)
+subset_ineligible <- c('NorESM2-MM', 'CMCC-CM2-SR5' )
+
             
 
 # Figure sizing info
@@ -585,6 +591,25 @@ ecs_subsets %>%
     select(subset_id, esm, cs) %>%
     rename(subset=esm) %>%
     na.omit() ->
+    ecs_subsets_clean
+
+# remove any other ESMs from candidacy to be selected:
+table_of_subsets %>%
+    filter(!(subset %in% subset_ineligible)) %>%
+    group_by(subset_id) %>%
+    mutate(nmodels = n()) %>%
+    ungroup %>%
+    filter(nmodels == 5) %>%
+    select(-nmodels)->
+    table_of_subsets
+
+ecs_subsets_clean %>%
+  filter(!(subset %in% subset_ineligible)) %>%
+    group_by(subset_id) %>%
+    mutate(nmodels = n()) %>%
+    ungroup %>%
+    filter(nmodels == 5) %>%
+    select(-nmodels) ->
     ecs_subsets_clean
 ```
 

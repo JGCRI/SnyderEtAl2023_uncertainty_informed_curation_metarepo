@@ -1,5 +1,5 @@
 ---
-title: "HS uncertainty evalution Experiment 1 - adding TP values, all models, no ECS constraint"
+title: "HS uncertainty evalution Experiment 1 -  all models, no ECS constraint"
 author: "acs"
 output: 
   html_document:
@@ -11,12 +11,12 @@ output:
 # Setup
 
 Choose ESMs with ECS constraint
-esms_min_exp1 = ['ACCESS-CM2',   'ACCESS-ESM1-5', 'CMCC-ESM2', 'MRI-ESM2-0', 'GFDL-ESM4']
-esms_min_exp2 = ['IPSL-CM6A-LR', 'ACCESS-ESM1-5',  'MRI-ESM2-0', 'BCC-CSM2-MR', 'MIROC6']
+esms_min_exp1 = ['ACCESS-CM2',   'ACCESS-ESM1-5', 'BCC-CSM2-MR', 'MIROC6', 'MRI-ESM2-0']
+esms_min_exp2 = ['IPSL-CM6A-LR', 'ACCESS-ESM1-5',  'MRI-ESM2-0', 'MPI-ESM1-2-LR', 'MIROC6']
 
 Choose ESMs without ECS constraint
-esms_min_exp1_noECS = ['CESM2', 'CanESM5', 'GFDL-ESM4', 'INM-CM5-0', 'MRI-ESM2-0']
-esms_min_exp2_noECS = ['CESM2', 'CanESM5',  'FGOALS-g3', 'IPSL-CM6A-LR', 'MRI-ESM2-0']
+esms_min_exp1_noECS = ['BCC-CSM2-MR', 'CESM2', 'CMCC-ESM2', 'MRI-ESM2-0', 'UKESM1-0-LL']
+esms_min_exp2_noECS = ['CESM2', 'IPSL-CM6A-LR', 'MRI-ESM2-0', 'MPI-ESM1-2-LR', 'MIROC6']
 
 ```{r setup}
 library(dplyr)
@@ -24,7 +24,7 @@ library(tidyr)
 library(ggplot2)
 
 read_dir <- 'hs_output_data'
-fig_dir <- 'figures_revise_tp_allmodels/'
+fig_dir <- 'figures/'
 
 
 year_cutoff <- 2040
@@ -380,7 +380,7 @@ shp2 %>%
 
 p_map <- ggplot() +
   geom_sf(data = shp3, mapping = aes(fill = fill_color)  ) +
-    scale_fill_brewer() +
+  #  scale_fill_brewer() +
   #geom_point(data = shp, mapping = aes(x = mean_lon, y = mean_lat), color = 'red') +
   geom_text(data = shp3, mapping = aes(label = Acronym, x = mean_lon, y= mean_lat), size = 4) +
   #ggtitle('coef') + 

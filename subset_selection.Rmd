@@ -51,6 +51,12 @@ fig_dir <- 'figures/'
 non_candidate_esm <- c("CIESM", 
                        "E3SM-1-1", "FIO-ESM-2-0", "GFDL-CM4", "IITM-ESM",
                        "IPSL-CM5A2-INCA", "KIOST-ESM", "NESM3", "NorESM2-LM")
+
+# Models that are ineligible for selection to the subset because we 
+# sourced their ECS values from Scafetta (still part of fuller space
+# we are characterizing with PCA)
+subset_ineligible <- c('NorESM2-MM', 'CMCC-CM2-SR5' )
+
             
 
 # Figure sizing info
@@ -498,6 +504,25 @@ ecs_subsets %>%
     select(subset_id, esm, cs) %>%
     rename(subset=esm) %>%
     na.omit()->
+    ecs_subsets_clean
+
+# remove any other ESMs from candidacy to be selected:
+table_of_subsets %>%
+    filter(!(subset %in% subset_ineligible)) %>%
+    group_by(subset_id) %>%
+    mutate(nmodels = n()) %>%
+    ungroup %>%
+    filter(nmodels == 5) %>%
+    select(-nmodels)->
+    table_of_subsets
+
+ecs_subsets_clean %>%
+  filter(!(subset %in% subset_ineligible)) %>%
+    group_by(subset_id) %>%
+    mutate(nmodels = n()) %>%
+    ungroup %>%
+    filter(nmodels == 5) %>%
+    select(-nmodels) ->
     ecs_subsets_clean
 ```
 

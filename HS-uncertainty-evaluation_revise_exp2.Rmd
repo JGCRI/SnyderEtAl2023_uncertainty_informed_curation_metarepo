@@ -1,5 +1,5 @@
 ---
-title: "HS uncertainty evalution Experiment 2 - adding TP values, independent models"
+title: "HS uncertainty evalution Experiment 2 - independent models"
 author: "acs"
 output: 
   html_document:
@@ -16,7 +16,7 @@ library(tidyr)
 library(ggplot2)
 
 read_dir <- 'hs_output_data'
-fig_dir <- 'figures_revise_tp/'
+fig_dir <- 'figures_indep/'
 
 
 year_cutoff <- 2040
@@ -371,7 +371,7 @@ shp2 %>%
 
 p_map <- ggplot() +
   geom_sf(data = shp3, mapping = aes(fill = fill_color)  ) +
-    scale_fill_brewer() +
+#    scale_fill_brewer() +
   #geom_point(data = shp, mapping = aes(x = mean_lon, y = mean_lat), color = 'red') +
   geom_text(data = shp3, mapping = aes(label = Acronym, x = mean_lon, y= mean_lat), size = 4) +
   #ggtitle('coef') + 

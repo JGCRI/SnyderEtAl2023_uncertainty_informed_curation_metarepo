@@ -1525,6 +1525,12 @@ fig_dir &lt;- &#39;figures/&#39;
 non_candidate_esm &lt;- c(&quot;CIESM&quot;, 
                        &quot;E3SM-1-1&quot;, &quot;FIO-ESM-2-0&quot;, &quot;GFDL-CM4&quot;, &quot;IITM-ESM&quot;,
                        &quot;IPSL-CM5A2-INCA&quot;, &quot;KIOST-ESM&quot;, &quot;NESM3&quot;, &quot;NorESM2-LM&quot;)
+
+# Models that are ineligible for selection to the subset because we 
+# sourced their ECS values from Scafetta (still part of fuller space
+# we are characterizing with PCA)
+subset_ineligible &lt;- c(&#39;NorESM2-MM&#39;, &#39;CMCC-CM2-SR5&#39; )
+
             
 
 # Figure sizing info
@@ -1684,8 +1690,15 @@ p_raw</code></pre>
 # eigenspace from the PCA
 full_eigenval &lt;- data.frame(eigenvalues=(full_pca$sdev)^2)
 full_eigenvec &lt;- full_pca$rotation
-
-write.csv(full_eigenval, &#39;orig_eval.csv&#39;)
+print(head(full_eigenvec[,1:2]))</code></pre>
+<pre><code>##                      PC1       PC2
+## ARP~tas_iasd -0.02156576 0.1442882
+## CAF~tas_iasd -0.01766895 0.1513798
+## CAU~tas_iasd -0.02965984 0.1167305
+## CNA~tas_iasd -0.03104238 0.1143767
+## EAS~tas_iasd -0.01672754 0.1459689
+## EAU~tas_iasd -0.02060451 0.1339410</code></pre>
+<pre class="r"><code>write.csv(full_eigenval, &#39;orig_eval.csv&#39;)
 write.csv(full_eigenvec, &#39;orig_evec.csv&#39;)
 
 # skree
@@ -1871,6 +1884,25 @@ ecs_subsets %&gt;%
     select(subset_id, esm, cs) %&gt;%
     rename(subset=esm) %&gt;%
     na.omit()-&gt;
+    ecs_subsets_clean
+
+# remove any other ESMs from candidacy to be selected:
+table_of_subsets %&gt;%
+    filter(!(subset %in% subset_ineligible)) %&gt;%
+    group_by(subset_id) %&gt;%
+    mutate(nmodels = n()) %&gt;%
+    ungroup %&gt;%
+    filter(nmodels == 5) %&gt;%
+    select(-nmodels)-&gt;
+    table_of_subsets
+
+ecs_subsets_clean %&gt;%
+  filter(!(subset %in% subset_ineligible)) %&gt;%
+    group_by(subset_id) %&gt;%
+    mutate(nmodels = n()) %&gt;%
+    ungroup %&gt;%
+    filter(nmodels == 5) %&gt;%
+    select(-nmodels) -&gt;
     ecs_subsets_clean</code></pre>
 <pre class="r"><code># For every subset, calculate the metrics
 metrics &lt;- data.frame()
