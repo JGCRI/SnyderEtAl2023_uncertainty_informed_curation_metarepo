@@ -204,7 +204,8 @@ p_raw <- ggplot(data = raw_plt) +
           plot.title = element_text(size=title_size),
           legend.text = element_text(size = axis_size-4),
           legend.key.width = unit(0.3, 'cm'),
-          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+          aspect.ratio = 1) +
     xlab('') + ylab('')+ guides(color="none", shape = 'none')
 
 ggsave(paste0(fig_dir, 'full_data_raw_plot.png'),p_raw, width = 10, height =6, units = 'in')
@@ -260,6 +261,10 @@ pfull
 ```{r}
 as.data.frame(full_eigenvec[,1:5]) %>%
     mutate(id = row.names(.)) %>%
+    mutate(PC1 = -PC1, 
+           PC2 = -PC2,
+           PC3 = -PC3, 
+           PC4 = -PC4) %>% 
     separate(id, into = c('region', 'index'), sep = '~')  %>%
     gather(PC, value, -region, -index) ->
     evec
@@ -350,10 +355,10 @@ p_map <- ggplot() +
   geom_sf(data = shp2 %>% na.omit(), mapping = aes(fill = value, color=value)  ) +
     scale_fill_gradient2(low = 'darkblue', mid = 'white', high = 'darkred', 
                          midpoint=0,
-                         limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
+                         limits = c(-0.25, 0.25))+
     scale_color_gradient2(low = 'darkblue', mid = 'white', high = 'darkred',
                           midpoint = 0,
-                         limits = c(-max(abs(shp2$value)), max(abs(shp2$value))))+
+                         limits = c(-0.25, 0.25))+
     theme_bw()+
     theme(legend.position="bottom",
           panel.grid.major = element_blank(),
@@ -663,9 +668,9 @@ full_pca$x %>%
   mutate(id = row.names(.)) %>%
   separate(id, into=c('model', 'scenario', 'ensemble'), sep = '~') %>%
   select(model, scenario, PC1, PC2, PC3, PC4, PC5) %>%
-    mutate(#PC1 = -PC1,
+    mutate(PC1 = -PC1,
            PC2 = -PC2,
-           #PC3 = -PC3,
+           PC3 = -PC3,
            PC4 = -PC4)->
   coordinates
 
@@ -713,7 +718,10 @@ p_coefs <- ggplot(data = grid_plot) +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),
           legend.text = element_text(size = axis_size-4),
-          legend.key.width = unit(0.3, 'cm')) +
+          legend.key.width = unit(0.3, 'cm'),
+          aspect.ratio = 1) +
+    xlim(-30, 40) +
+    ylim(-15, 40) +
     xlab('') + ylab('')
 
 ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot.png'), width = 8, height =6, units = 'in')
@@ -737,7 +745,10 @@ p_coefs <- ggplot(data = grid_plot) +
     theme(strip.text = element_text(size = axis_size),
           plot.title = element_text(size=title_size),
           legend.text = element_text(size = axis_size-4),
-          legend.key.width = unit(0.3, 'cm')) +
+          legend.key.width = unit(0.3, 'cm'),
+          aspect.ratio = 1) +
+        xlim(-30, 40) +
+    ylim(-15, 40) +
     xlab('') + ylab('')
 
 ggsave(paste0(fig_dir, 'full_data_coeff_grid_plot_subset.png'), width = 8, height =6, units = 'in')
