@@ -241,7 +241,7 @@ p_tas <- ggplot()+
     scale_fill_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
     geom_line(coef_rgn_plots2 %>% filter(var == 'tas'),
               mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
-    facet_wrap(~rgn, ncol=6) +
+    facet_wrap(~rgn, ncol=8) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     ggtitle(paste('Temperature Experiment 2, rms >', rms_cutoff)) +
     theme_bw() +
@@ -250,10 +250,11 @@ p_tas <- ggplot()+
            axis.title = element_text(size = axis_size), 
           plot.title = element_text(size = title_size),
           strip.text = element_text(size = axis_size),
-          legend.key = element_rect(fill = 'grey')) + 
+          legend.key = element_rect(fill = 'grey'),
+          aspect.ratio = 0.8) + 
     ylab('fraction of total variance')
 
-ggsave(paste0(fig_dir, 'temperature_exp2_', rms_cutoff,'_HS_regions.png'), p_tas, width = 8, height = 8, units = 'in')
+ggsave(paste0(fig_dir, 'temperature_exp2_', rms_cutoff,'_HS_regions.png'), p_tas, width = 12, height = 8, units = 'in')
 
 p_tas
 
@@ -268,7 +269,7 @@ p_pr <- ggplot()+
     scale_fill_manual(values = c('darkorange', 'forestgreen', 'blue4')) +
     geom_line(coef_rgn_plots2 %>% filter(var == 'pr'),
               mapping=aes(x = year, y = value, linetype = uncertainty), color = 'white') +
-    facet_wrap(~rgn, ncol=6) +
+    facet_wrap(~rgn, ncol=8) +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     ggtitle(paste('Precipitation Experiment 2, rms >', rms_cutoff))+
     theme_bw() +
@@ -277,10 +278,11 @@ p_pr <- ggplot()+
            axis.title = element_text(size = axis_size), 
           plot.title = element_text(size = title_size),
           strip.text = element_text(size = axis_size),
-          legend.key = element_rect(fill = 'grey')) + 
+          legend.key = element_rect(fill = 'grey'),
+          aspect.ratio = 0.8) + 
     ylab('fraction of total variance')
 
-ggsave(paste0(fig_dir, 'precipitation_exp2_', rms_cutoff,'_HS_regions.png'), p_pr, width = 8, height = 8, units = 'in')
+ggsave(paste0(fig_dir, 'precipitation_exp2_', rms_cutoff,'_HS_regions.png'), p_pr, width = 12, height = 8, units = 'in')
 
 p_pr
 
