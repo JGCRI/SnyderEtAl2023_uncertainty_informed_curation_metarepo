@@ -52,11 +52,11 @@ non_candidate_esm <- c("CIESM",
                        "E3SM-1-1", "FIO-ESM-2-0", "GFDL-CM4", "IITM-ESM",
                        "IPSL-CM5A2-INCA", "KIOST-ESM", "NESM3", "NorESM2-LM")
 
-# Models that are ineligible for selection to the subset because we 
-# sourced their ECS values from Scafetta (still part of fuller space
-# we are characterizing with PCA)
-subset_ineligible <- c('NorESM2-MM', 'CMCC-CM2-SR5' )
-
+# # Models that are ineligible for selection to the subset because we 
+# # sourced their ECS values from Scafetta (still part of fuller space
+# # we are characterizing with PCA)
+# subset_ineligible <- c('NorESM2-MM', 'CMCC-CM2-SR5' )
+subset_ineligible <- c() # all models eligible following values sourced from Zelinka
             
 
 # Figure sizing info
